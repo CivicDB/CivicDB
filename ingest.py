@@ -19,7 +19,7 @@ def watch(path, refresh = 10.0):
             for file in missing:
                 del modtimes[file]
             for file in present:
-                modtime = os.stat(file).st_mtime
+                modtime = os.path.getmtime(file)
                 if not modtimes.has_key(file) or modtimes[file] != modtime:
                     modtimes[file] = modtime
                     yield file
@@ -30,16 +30,17 @@ def watch(path, refresh = 10.0):
             time.sleep(refresh - remaining)
 
 def hash(path):
-    file = open(path)
-    checksum = hashlib.md5()
-    while True:
-        data = file.read(2**20)
-        if data:
-            checksum.update(data)
-        else:
-            break
-    file.close()
-    return checksum.hexdigest()
+    if os.path.isfile(path):
+        file = open(path)
+        checksum = hashlib.md5()
+        while True:
+            data = file.read(2**20)
+            if data:
+                checksum.update(data)
+            else:
+                break
+        file.close()
+        return checksum.hexdigest()
 
 class entry:
     def __init__(self, path):
@@ -49,40 +50,64 @@ class entry:
 class metadata(dict):
     def __init__(self, path):
         dict.__init__(self)
-    def __contains__(self, item):
-        print 'contains'
-        return dict.__contains__(self, item)
+    def _read(self):
+        # Syncronize the cached version in memory with the version on disk
+        # if necessary.  We don't really know who else might be manipulating
+        # the database at the same time, and in fact we can't really protect
+        # ourselves from a truly bad actor, but by adhering to this simple
+        # locking mechanism we can protect ourselves from conflicts with
+        # other unknown programs which manipulate or reference the database.
+        pass
+    def _write(self):
+        # Same as _read, but in the opposite direction.  Due to our locking
+        # mechanism, we do not behave nicely if the dictionary has changed
+        # while we hold the lock.  If you don't respect our lock we feel
+        # no need to respect your changes.
+        pass
+    def _lock(self):
+        pass
+    def _unlock(self):
+        pass
+    def has_key(self, key):
+        if self._lock():
+            ret = dict.has_key(self, key)
+            self._unlock()
+            return ret
+        else:
+            return False
     def __getitem__(self, key):
-        print 'get'
-        return dict.__getitem__(self, key)
+        if self._lock():
+            ret = dict.__getitem__(self, key)
+            self._unlock()
+            return ret
+        else:
+            return None
     def __setitem__(self, key, value):
-        print 'set'
-        return dict.__setitem__(self, key, value)
+        if self._lock():
+            dict.__setitem__(self, key, value)
+            self._unlock()
     def __delitem__(self, key):
-        print 'del'
-        return dict.__delitem__(self, key)
+        if self._lock():
+            dict.__delitem__(self, key)
+            self._unlock()
     def keys(self):
         print 'keys'
         return dict.keys(self)
 
 if __name__ == '__main__':
-    hopper = os.path.join(os.getcwd(), 'hopper')
-    database = os.path.join(os.getcwd(), 'database')
-    products = os.path.join(os.getcwd(), 'products')
+    hopper = os.path.abspath('hopper')
+    database = os.path.abspath('database')
+    products = os.path.abspath('products')
 
     if len(sys.argv[1:]) > 0:
         hopper = sys.argv[1]
-    if os.path.exists(hopper):
+    if os.path.isdir(hopper):
         watcher = watch(path = hopper)
         db = metadata(database)
         while True:
             filename = watcher.next()
-            print 'we found ' + filename
             object = entry(path = filename)
-            if db.has_key(object.md5):
-                print 'file ' + object.path + ' is already stored in metadata'
-                print 'the checksum is ' + object.md5
-            else:
+            if not db.has_key(object.md5):
                 db[object.md5] = entry
     else:
         print hopper + ' does not appear to exist.'
