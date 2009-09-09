@@ -1,25 +1,36 @@
 #!/usr/bin/env python
 
-import sys
 import csv
-import xml
+import sys
+import xml.dom.minidom
+import xml.etree.ElementTree
 
 class csv2xml:
     def __init__(self, filename):
-        self.file = open(filename)
-        self.data = csv.DictReader(self.file)
-    def __del__(self):
-        self.file.close()
-    def __repr__(self):
-        out = '<data>\n'
-        for entry in self.data:
-            out += '  <entry>\n'
+        file = open(filename)
+
+        sniffer = csv.Sniffer()
+        sample = file.readline()
+        file.seek(0)
+        dialect = sniffer.sniff(sample)
+        explicit = sniffer.has_header(sample)
+
+        self._raw = csv.DictReader(file, restval = None, dialect = dialect)
+        self._result = xml.etree.ElementTree.Element('data')
+        for entry in self._raw:
+            newentry = xml.etree.ElementTree.SubElement(self._result, 'entry')
             for key in entry.keys():
-                out += '    <field name = "' + key
-                out += '" value = "' + entry[key] + '" />\n'
-            out += '  </entry>\n'
-        out += '</data>'
-        return out
+                # Allow for missing values 
+                if entry[key]:
+                    newfield = xml.etree.ElementTree.SubElement(newentry, 'field')
+                    newfield.set(key = 'name', value = key)
+                    newfield.set(key = 'value', value = entry[key])
+        file.close()
+    def __del__(self):
+        pass
+    def __repr__(self):
+        return xml.dom.minidom.parseString(
+            xml.etree.ElementTree.tostring(self._result)).toprettyxml()
 
 if __name__ == '__main__':
     if len(sys.argv[1:]) == 0:
