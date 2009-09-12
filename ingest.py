@@ -98,9 +98,9 @@ class metadata(dict):
         if self._lock():
             dict.__delitem__(self, key)
             self._unlock()
-    def keys(self):
-        print 'keys'
-        return dict.keys(self)
+#    def keys(self):
+#        print 'keys'
+#        return dict.keys(self)
 
 class converter:
     def __init__(self, path):
@@ -111,11 +111,17 @@ class converter:
         return self._name
     def accepts(self, object):
         process = subprocess.Popen([self._path, '--test', object.filename()])
-        process.wait()
+        while process.poll() == None:
+            # Don't care about output, just the return code.
+            try:
+                process.communicate()
+            except ValueError:
+                break
         return process.returncode == 0
-    def process(self, object):
+    def process(self, object, destination):
         input_filename = object.filename()
-        output_filename = os.path.splitext(input_filename)[0] + '.xml'
+        #output_filename = os.path.splitext(input_filename)[0] + '.xml'
+        output_filename = destination
         print '     + conversion input: ' + input_filename
         process = subprocess.Popen([self._path, input_filename],
             stdout = subprocess.PIPE)#, stderr = subprocess.PIPE)
@@ -158,8 +164,8 @@ if __name__ == '__main__':
         files = [os.path.abspath(os.path.join(converter_path, file)) for file in files]
         # Converters must be executable
         files = [file for file in files if os.access(file, os.X_OK)]
-        # Converters express their input and output formats in the filename
-        files = [file for file in files if file.find('2') != -1]
+#        # Converters express their input and output formats in the filename
+#        files = [file for file in files if file.find('2') != -1]
         for file in files:
             converters.append(converter(path = file))
 
@@ -169,15 +175,18 @@ if __name__ == '__main__':
         watcher = watch(path = hopper_path)
         db = metadata(database_path)
         while True:
-            filename = watcher.next()
-            input_object = entry(path = filename)
+            source = watcher.next()
+            input_object = entry(path = source)
             if not db.has_key(input_object.hash()):
                 print '     + file hash calculated: ' + str(input_object.hash())
                 db[input_object.hash()] = input_object
                 for converter in converters:
                     if converter.accepts(object = input_object):
+                        destination = os.path.abspath(os.path.join(products_path,
+                            os.path.splitext(os.path.basename(source))[0] + '.xml'))
                         print '     + file converter located: ' + converter.name()
-                        output_object = converter.process(object = input_object)
+                        output_object = converter.process(object = input_object,
+                            destination = destination)
                         if output_object:
                             print '     + file processed: ' + output_object.filename()
                             break
