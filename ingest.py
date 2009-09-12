@@ -197,4 +197,4 @@ if __name__ == '__main__':
             else:
                 print '     - file already processed'
     else:
-        print ' - path does not exist: ' + hopper
+        print ' - path does not exist: ' + hopper_path

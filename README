@@ -1,0 +1,50 @@
+0. Copyright & License
+1. About
+2. Usage
+   =====
+   2.0 Prerequisites
+       -------------
+       Python is required for ingestion of files from disk.  Some converters
+       may also require Python.
+
+   2.1 Definitions
+       -----------
+       The "ingestor" is the program responsible for shepherding data from a
+       raw format to a normalized format.
+       A "converter" is a program which actually reads and parses raw data
+       and generates a normalized format version of that data.
+
+   2.2 Inbound data interface
+   2.3 Converting data to normalized format
+       ------------------------------------
+       From the repository root, execute ingest.py.  On a linux or unix machine
+       you might type "./ingest.py" or "python ingest.py".
+
+       Until the ingest.py process is killed, the directory "hopper" under the
+       repository root will be monitored for new files, which we will then
+       attempt to convert and place the resulting normalized format data files
+       in the "products" directory.
+
+   2.4 Writing converters for use with the ingestor
+       --------------------------------------------
+       Converters must live within the "converters" directory of the repository
+       root.  Converters should be executable.  The machine which is performing
+       the conversion should have all the libraries and binaries required to
+       do so.  Meeting these prerequisites is the responsibility of the
+       operator.
+
+       Converters must accept an argument which is the path to the input file.
+       Converters must also accept an optional flag, "--test", which will be
+       passed in conjunction with the input file if a simple decision is needed
+       instead of conversion.  Regardless of the input parameters, converters
+       should return 0 upon success (successful conversion if filename passed,
+       anticipated successful conversion if filename and --test passed), or a
+       positive value upon failure.
+
+       Converters should write the result of their conversion to the standard
+       output stream.  The ingestor is responsible for generating an output
+       file from the standard output stream.
+
+       Converters may use the standard error stream to report issues.  Issues
+       which result in a failure to generate output, or the generation of bad
+       output, should be accompanied by a positive return value.
