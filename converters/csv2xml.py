@@ -1,19 +1,28 @@
 #!/usr/bin/env python
 
 import csv
+import optparse
 import sys
 import xml.dom.minidom
 import xml.etree.ElementTree
 
 class csv2xml:
-    def __init__(self, filename):
+    def __init__(self, filename, test):
         file = open(filename)
 
         sniffer = csv.Sniffer()
-        sample = file.readline()
+        sample1 = file.readline()
+        sample2 = file.readline()
         file.seek(0)
-        dialect = sniffer.sniff(sample)
-        explicit = sniffer.has_header(sample)
+        dialect = sniffer.sniff(sample1)
+        explicit = sniffer.has_header(sample1)
+
+        if test:
+            if sample1.count(',') != sample2.count(','):
+                sys.exit(1)
+            if sample1.count(',') == 0:
+                sys.exit(1)
+            sys.exit(0)
 
         self._raw = csv.DictReader(file, restval = None, dialect = dialect)
         self._result = xml.etree.ElementTree.Element('data')
@@ -33,7 +42,15 @@ class csv2xml:
             xml.etree.ElementTree.tostring(self._result)).toprettyxml()
 
 if __name__ == '__main__':
-    if len(sys.argv[1:]) == 0:
-        print 'Syntax: ' + sys.argv[0] + ' <input file>'
+    usage = 'usage: %prog [options] filename'
+    parser = optparse.OptionParser(usage = usage)
+    parser.add_option('--test', action = 'store_true', default = False, 
+        dest = 'testonly',
+        help = 'do not perform conversion, but decide if conversion is likely')
+    (options, args) = parser.parse_args(sys.argv[1:])
+    if len(args) == 0:
+        parser.error()
+        sys.exit(1)
     else:
-        print csv2xml(filename = sys.argv[1])
+        print csv2xml(filename = args[0], test = options.testonly)
+        sys.exit(0)

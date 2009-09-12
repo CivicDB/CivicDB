@@ -131,7 +131,7 @@ class converter:
 
 if __name__ == '__main__':
     hopper_path = os.path.abspath('hopper')
-    #database_path = os.path.abspath('database')
+    database_path = os.path.abspath('database')
     converter_path = os.path.abspath('converters')
     products_path = os.path.abspath('products')
 
