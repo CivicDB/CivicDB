@@ -11,7 +11,7 @@ import time
 # it, or if this is the first time we have seen it, yield the filename.
 def watch(path, refresh = 10.0):
     modtimes = dict()
-    print 'monitoring ' + path
+    print ' + monitoring: ' + path
     while True:
         cycle = time.time()
         if os.path.exists(path):
@@ -19,12 +19,13 @@ def watch(path, refresh = 10.0):
             present = [os.path.join(path, file) for file in present]
             missing = [key for key in modtimes.keys() if key not in present]
             for file in missing:
+                print '   - file missing: ' + file
                 del modtimes[file]
             for file in present:
                 modtime = os.path.getmtime(file)
                 if not modtimes.has_key(file) or modtimes[file] != modtime:
                     modtimes[file] = modtime
-                    print 'found file ' + file
+                    print '   + file noticed: ' + file
                     yield file
         else:
             modtimes.clear()
@@ -106,6 +107,8 @@ class converter:
         self._path = path
         self._name = os.path.basename(self._path)
         [self._input, self._output] = self._name.split('2')
+    def name(self):
+        return self._name
     def accepts(self, object):
         process = subprocess.Popen([self._path, '--test', object.filename()])
         process.wait()
@@ -113,8 +116,9 @@ class converter:
     def process(self, object):
         input_filename = object.filename()
         output_filename = os.path.splitext(input_filename)[0] + '.xml'
+        print '   + conversion input: ' + input_filename
         process = subprocess.Popen([self._path, input_filename],
-            stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+            stdout = subprocess.PIPE)#, stderr = subprocess.PIPE)
         process.wait()
         try:
             [out, err] = process.communicate()
@@ -123,14 +127,13 @@ class converter:
                 print 'Error messages from ' + self._path + ':'
                 print err
             if out:
-                print 'writing to ' + output_filename + '...'
                 output_file = open(output_filename, 'w')
                 output_file.write(out)
                 output_file.close()
-                print 'done'
+                print '   + conversion result: ' + output_filename
         except ValueError:
             # Pipes are empty
-            pass
+            print '   - converter generated no output'
         return entry(path = output_filename)
 
 if __name__ == '__main__':
@@ -161,10 +164,17 @@ if __name__ == '__main__':
             filename = watcher.next()
             input_object = entry(path = filename)
             if not db.has_key(input_object.hash()):
+                print '     + file hash calculated: ' + str(input_object.hash())
                 db[input_object.hash()] = input_object
                 for converter in converters:
                     if converter.accepts(object = input_object):
+                        print '     + file converter located: ' + converter.name()
                         output_object = converter.process(object = input_object)
+                        print '     + file processed: ' + output_object.filename()
                         break
+                else:
+                    print '     - file has no converter'
+            else:
+                print '     - file already processed'
     else:
-        print hopper + ' does not appear to exist.'
+        print ' - path does not exist: ' + hopper
