@@ -106,7 +106,7 @@ class converter:
     def __init__(self, path):
         self._path = path
         self._name = os.path.basename(self._path)
-        [self._input, self._output] = self._name.split('2')
+        [self._input_format, self._output_format] = self._name.split('2')
     def name(self):
         return self._name
     def accepts(self, object):
@@ -116,25 +116,33 @@ class converter:
     def process(self, object):
         input_filename = object.filename()
         output_filename = os.path.splitext(input_filename)[0] + '.xml'
-        print '   + conversion input: ' + input_filename
+        print '     + conversion input: ' + input_filename
         process = subprocess.Popen([self._path, input_filename],
             stdout = subprocess.PIPE)#, stderr = subprocess.PIPE)
-        process.wait()
-        try:
-            [out, err] = process.communicate()
-            if err:
-                print 'Errors occured while processing ' + input_filename
-                print 'Error messages from ' + self._path + ':'
-                print err
-            if out:
-                output_file = open(output_filename, 'w')
-                output_file.write(out)
-                output_file.close()
-                print '   + conversion result: ' + output_filename
-        except ValueError:
-            # Pipes are empty
-            print '   - converter generated no output'
-        return entry(path = output_filename)
+        output_file = open(output_filename, 'w')
+        while process.returncode == None:
+            try:
+                [out, err] = process.communicate()
+                if out:
+                    output_file.write(out)
+            except ValueError:
+                # Pipes are empty.
+                break
+#        # Slurp any final data
+#        try:
+#            [out, err] = process.communicate()
+#            output_file.write(out)
+#        except ValueError:
+#            # Pipes are empty.  Not surprising.
+#            pass
+        output_file.close()
+        # Decide success or failure.
+        if process.returncode == 0:
+            print '     + conversion result: ' + output_filename
+            return entry(path = output_filename)
+        else:
+            print '     - converter failed'
+            return None
 
 if __name__ == '__main__':
     hopper_path = os.path.abspath('hopper')
@@ -170,8 +178,11 @@ if __name__ == '__main__':
                     if converter.accepts(object = input_object):
                         print '     + file converter located: ' + converter.name()
                         output_object = converter.process(object = input_object)
-                        print '     + file processed: ' + output_object.filename()
-                        break
+                        if output_object:
+                            print '     + file processed: ' + output_object.filename()
+                            break
+                        else:
+                            print '     - file processing failed'
                 else:
                     print '     - file has no converter'
             else:
