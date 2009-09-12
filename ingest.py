@@ -2,6 +2,7 @@
 
 import hashlib
 import os
+import subprocess
 import sys
 import time
 
@@ -44,8 +45,12 @@ def hash(path):
 
 class entry:
     def __init__(self, path):
-        self.path = path
-        self.md5 = hash(self.path)
+        self._path = path
+        self._md5 = hash(self._path)
+    def filename(self):
+        return self._path
+    def hash(self):
+        return self._md5
 
 class metadata(dict):
     def __init__(self, path):
@@ -96,26 +101,64 @@ class metadata(dict):
 
 class converter:
     def __init__(self, path):
-        pass
-    def process(self, path):
-        pass
+        self._path = path
+        self._name = os.path.basename(self._path)
+        [self._input, self._output] = self._name.split('2')
+    def accepts(self, object):
+        process = subprocess.Popen([self._path, '--test', object.filename()])
+        process.wait()
+        return process.returncode == 0
+    def process(self, object):
+        input_filename = object.filename()
+        output_filename = os.path.splitext(input_filename)[0] + '.xml'
+        process = subprocess.Popen([self._path, input_filename],
+            stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+        process.wait()
+        try:
+            [out, err] = process.communicate()
+            if err:
+                print 'Errors occured while processing ' + input_filename
+                print 'Error messages from ' + self._path + ':'
+                print err
+            if out:
+                output_file = open(output_filename, 'w')
+                output_file.write(out)
+                output_file.close()
+        except ValueError:
+            # Pipes are empty
+            pass
+        return entry(path = output_filename)
 
 if __name__ == '__main__':
-    hopper = os.path.abspath('hopper')
-    database = os.path.abspath('database')
-    converters = os.path.abspath('converters')
-    products = os.path.abspath('products')
+    hopper_path = os.path.abspath('hopper')
+    #database_path = os.path.abspath('database')
+    converter_path = os.path.abspath('converters')
+    products_path = os.path.abspath('products')
+
+    converters = []
+    if os.path.isdir(converter_path):
+        # Canonicalize the pathnames of files in the converters directory.
+        files = [os.path.abspath(file) for file in os.listdir(converter_path)]
+        # Converters must be executable
+        files = [file for file in files if os.access(file, os.X_OK)]
+        # Converters express their input and output formats in the filename
+        files = [file for file in files if file.find('2') != -1]
+        for file in files:
+            converters.append(converter(path = file))
 
     if len(sys.argv[1:]) > 0:
-        hopper = sys.argv[1]
-    if os.path.isdir(hopper):
-        watcher = watch(path = hopper)
-        db = metadata(database)
+        hopper_path = sys.argv[1]
+    if os.path.isdir(hopper_path):
+        watcher = watch(path = hopper_path)
+        db = metadata(database_path)
         while True:
             filename = watcher.next()
-            object = entry(path = filename)
-            if not db.has_key(object.md5):
-                db[object.md5] = entry
-                (db[object.md5])
+            input_object = entry(path = filename)
+            if not db.has_key(input_object.hash()):
+                db[input_object.hash()] = input_object
+                for converter in converters:
+                    if converter.accepts(object = input_object):
+                        output_object = converter.process(object = input_object)
+                        break
     else:
         print hopper + ' does not appear to exist.'
