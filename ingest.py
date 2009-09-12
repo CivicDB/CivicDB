@@ -94,9 +94,16 @@ class metadata(dict):
         print 'keys'
         return dict.keys(self)
 
+class converter:
+    def __init__(self, path):
+        pass
+    def process(self, path):
+        pass
+
 if __name__ == '__main__':
     hopper = os.path.abspath('hopper')
     database = os.path.abspath('database')
+    converters = os.path.abspath('converters')
     products = os.path.abspath('products')
 
     if len(sys.argv[1:]) > 0:
@@ -109,5 +116,6 @@ if __name__ == '__main__':
             object = entry(path = filename)
             if not db.has_key(object.md5):
                 db[object.md5] = entry
+                (db[object.md5])
     else:
         print hopper + ' does not appear to exist.'
