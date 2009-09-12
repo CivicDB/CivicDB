@@ -11,6 +11,7 @@ import time
 # it, or if this is the first time we have seen it, yield the filename.
 def watch(path, refresh = 10.0):
     modtimes = dict()
+    print 'monitoring ' + path
     while True:
         cycle = time.time()
         if os.path.exists(path):
@@ -23,6 +24,7 @@ def watch(path, refresh = 10.0):
                 modtime = os.path.getmtime(file)
                 if not modtimes.has_key(file) or modtimes[file] != modtime:
                     modtimes[file] = modtime
+                    print 'found file ' + file
                     yield file
         else:
             modtimes.clear()
@@ -121,9 +123,11 @@ class converter:
                 print 'Error messages from ' + self._path + ':'
                 print err
             if out:
+                print 'writing to ' + output_filename + '...'
                 output_file = open(output_filename, 'w')
                 output_file.write(out)
                 output_file.close()
+                print 'done'
         except ValueError:
             # Pipes are empty
             pass
@@ -137,8 +141,10 @@ if __name__ == '__main__':
 
     converters = []
     if os.path.isdir(converter_path):
+        # Get the names of files in the converters directory.
+        files = os.listdir(converter_path)
         # Canonicalize the pathnames of files in the converters directory.
-        files = [os.path.abspath(file) for file in os.listdir(converter_path)]
+        files = [os.path.abspath(os.path.join(converter_path, file)) for file in files]
         # Converters must be executable
         files = [file for file in files if os.access(file, os.X_OK)]
         # Converters express their input and output formats in the filename

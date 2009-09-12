@@ -10,19 +10,23 @@ class csv2xml:
     def __init__(self, filename, test):
         file = open(filename)
 
-        sniffer = csv.Sniffer()
-        sample1 = file.readline()
-        sample2 = file.readline()
-        file.seek(0)
-        dialect = sniffer.sniff(sample1)
-        explicit = sniffer.has_header(sample1)
-
         if test:
+            sample1 = file.readline()
+            sample2 = file.readline()
+            file.close()
             if sample1.count(',') != sample2.count(','):
                 sys.exit(1)
             if sample1.count(',') == 0:
                 sys.exit(1)
             sys.exit(0)
+
+        sniffer = csv.Sniffer()
+        sampleblock = file.read(1024)
+        file.seek(0)
+        sampleline = file.readline()
+        file.seek(0)
+        dialect = sniffer.sniff(sampleblock)
+        explicit = sniffer.has_header(sampleline)
 
         self._raw = csv.DictReader(file, restval = None, dialect = dialect)
         self._result = xml.etree.ElementTree.Element('data')
