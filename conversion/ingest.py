@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from __future__ import with_statement
+import collections
 import optparse
 import os
 import subprocess
@@ -14,15 +15,15 @@ import sources.file
 
 if __name__ == '__main__':
     parser = optparse.OptionParser()
-    parser.add_options("-d", "--dir", dest = "dirs", \
+    parser.add_option("-d", "--dir", dest = "dirs", \
         help = "Convert all files in DIR", metavar = "DIR", action = "append")
     parser.add_option("-f", "--file", dest = "files", \
         help = "Convert FILE", metavar = "FILE", action = "append")
-    parser.add_option("--api", dest = "api", \
+    parser.add_option("--api", dest = "apis", \
         help = "Feed from the api at API", metavar = "API", action = "append")
     parser.add_option("--service", dest = "service", \
         help = "Run as a service", action="store_true", \
-        default=False)
+        default = False)
     (options, args) = parser.parse_args()
 
     converter_path = os.path.abspath('converters')
@@ -30,16 +31,24 @@ if __name__ == '__main__':
 
     converters = converters.list(path = converter_path)
 
-    inputs = []
-    for path in (options.dirs + options.files):
+    inputs = collections.deque()
+    locals = []
+    if options.dirs:
+        locals += options.dirs
+    if options.files:
+        locals += options.files
+    for path in locals:
         input = None
         if options.service:
-            input = sources.file.watcher(path = dir)
+            input = sources.file.watcher(path = path)
         else:
-            input = sources.file.indexer(path = dir)
+            input = sources.file.indexer(path = path)
         if input:
             inputs.append(input)
-    for url in options.apis:
+    remotes = []
+    if options.apis:
+        remotes += options.apis
+    for url in remotes:
         input = None
         if options.service:
             input = sources.web.watcher(path = url)
@@ -49,8 +58,13 @@ if __name__ == '__main__':
             inputs.append(input)
 
     # Round-robin for now
-    for input in inputs:
-        for item in input.hopper():
+    while len(inputs) > 0:
+        input = inputs.popleft()
+        dataset = input.next()
+        if dataset:
+            # Put the input source back in the queue, as it was not
+            # empty.
+            inputs.append(input)
             for converter in converters:
                 if converter.accepts(object = dataset):
                     print '     + file converter located: ' + converter.name()

@@ -1,11 +1,27 @@
 #!/usr/bin/env python
 
-api_root = 'http://api.del.icio.us'
-
+import collections
 import hashlib
 import os
 import time
-import urllib2
+
+class indexer:
+    def __init__(self, path):
+        self._path = path
+        if os.path.exists(self._path):
+            if os.path.isdir(self._path):
+                files = os.listdir(self._path)
+                self._present = collections.deque(\
+                    [os.path.join(self._path, file) for file in files])
+            else:
+                self._present = collections.deque([self._path])
+    def __iter__(self):
+        return self
+    def next(self):
+        if len(self._present) > 0:
+            return entry(unprocessed = self._present.popleft())
+        else:
+            return None
 
 # Queries given directory at given refresh interval (expressed in seconds)
 # If the file's modification time is different than the last time we saw
@@ -114,12 +130,6 @@ class metadata(dict):
 def hopper():
     watcher = watch(path = os.path.abspath('hopper'))
     hashes = metadata()
-#        try:
-#            return urllib2.urlopen(api_root).read()
-#        except urllib2.HTTPError, e:
-#            print 'HTTP error ' + str(e.code) + ': ' + e.reason.args[1]
-#        except urllib2.URLError, e:
-#            print 'Network connection error: ' + e.reason.args[1]
     while True:
         file = watcher.next()
         dataset = entry(unprocessed = file)
@@ -129,6 +139,3 @@ def hopper():
             yield dataset
         else:
             print '     - file already processed'
-
-if __name__ == '__main__':
-    print next()
