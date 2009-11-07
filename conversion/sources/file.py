@@ -5,23 +5,20 @@ import hashlib
 import os
 import time
 
-class indexer:
-    def __init__(self, path):
-        self._path = path
+import base
+
+class indexer(base.indexer):
+    def _index(self):
         if os.path.exists(self._path):
             if os.path.isdir(self._path):
                 files = os.listdir(self._path)
-                self._present = collections.deque(\
+                return collections.deque(\
                     [os.path.join(self._path, file) for file in files])
             else:
-                self._present = collections.deque([self._path])
-    def __iter__(self):
-        return self
-    def next(self):
-        if len(self._present) > 0:
-            return entry(unprocessed = self._present.popleft())
-        else:
-            return None
+                return collections.deque([self._path])
+
+class watcher(base.watcher):
+    pass
 
 # Queries given directory at given refresh interval (expressed in seconds)
 # If the file's modification time is different than the last time we saw
@@ -49,36 +46,6 @@ def watch(path, refresh = 10.0):
         remaining = time.time() - cycle
         if refresh > remaining:
             time.sleep(refresh - remaining)
-
-def hash(path):
-    if os.path.isfile(path):
-        file = open(path)
-        checksum = hashlib.md5()
-        while True:
-            data = file.read(2**20)
-            if data:
-                checksum.update(data)
-            else:
-                break
-        file.close()
-        return checksum.hexdigest()
-
-class entry:
-    def __init__(self, unprocessed):
-        self._unprocessed = unprocessed
-        self._processed = os.path.join(os.path.abspath('products'), 
-            os.path.splitext(os.path.basename(self._unprocessed))[0] + '.xml')
-        self._md5 = hash(self._unprocessed)
-    def __enter__(self):
-        pass
-    def __exit__(self, type, value, traceback):
-        pass
-    def filename(self):
-        return self._unprocessed
-    def target(self):
-        return self._processed
-    def hash(self):
-        return self._md5
 
 class metadata(dict):
     def __init__(self):
