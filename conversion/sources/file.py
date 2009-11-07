@@ -17,8 +17,10 @@ class indexer(base.indexer):
             else:
                 return collections.deque([self._path])
 
-class watcher(base.watcher):
-    pass
+class watcher(base.watcher, indexer):
+    def _index(self):
+        return indexer._index(self)
+        
 
 # Queries given directory at given refresh interval (expressed in seconds)
 # If the file's modification time is different than the last time we saw

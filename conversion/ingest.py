@@ -26,8 +26,8 @@ if __name__ == '__main__':
         default = False)
     (options, args) = parser.parse_args()
 
-    converter_path = os.path.abspath('converters')
-    products_path = os.path.abspath('products')
+    converter_path = os.path.join(os.path.dirname(__file__), 'converters')
+    products_path = os.path.join(os.path.dirname(__file__), 'products')
 
     converters = converters.list(path = converter_path)
 
