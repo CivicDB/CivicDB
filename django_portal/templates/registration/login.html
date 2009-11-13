@@ -1,0 +1,35 @@
+{% extends "registration/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Log in" %}{% endblock %}
+
+{% block content %}
+{% if not user.is_authenticated %}
+{% if form.errors %}
+<p class="error">{% trans "Please correct the errors below:" %}{{ form.non_field_errors }}</p>
+{% endif %}
+
+<form method="post" action="?next={{ next|default:"/map/" }}">
+<dl>
+<dt><label for="id_username">{% trans "Username:" %}</label>{% if form.username.errors %} <span class="error">{{ form.username.errors|join:", " }}</span>{% endif %}</dt>
+<dd>{{ form.username }}</dd>
+<dt><label for="id_password">{% trans "Password:" %}</label>{% if form.password.errors %} <span class="error">{{ form.password.errors|join:", " }}</span>{% endif %}</dt>
+<dd>{{ form.password }}</dd>
+<dt><input type="submit" value="{% trans "Log in" %}" /></dt>
+</dl>
+</form>
+
+
+<p>{% trans "If you don't have an account, you can" %} <a href="/accounts/register/">{% trans "sign up for one." %}</a></p>
+
+<p>{% trans "Forgot your password? You can" %} <a href="/accounts/password/reset/">{% trans "reset it" %}</a> {% trans "and receive an email." %}</p>
+
+{% else %}
+<p>{% trans "You are already logged in" %}   | <b>{{user.email|escape}}</b></p>
+<p><a href="/accounts/logout/?next=/login" class="admin">{% trans "Log Out" %}</a></p>
+{% endif %}
+{% endblock %}
+
+
+
+

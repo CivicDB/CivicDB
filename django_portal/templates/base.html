@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+{% load vt_tags %}
+{% get_latest metadata.DataSeries 5 as latest_dataseries %}
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>CivicDB</title>
+        <link rel="stylesheet" href="/static/civicdb.css" type="text/css"/>
+        {% block tophead %}{% endblock %}
+        <script type="text/javascript" src="/static/jquery.min.js"></script>
+        {{form.media}}
+        {% block extrahead %}{% endblock %}
+</head>
+
+<body {% block body_load %}{% endblock %}>   
+         
+        <div id ="header">
+            <div id="logo">
+                <a href="/"><img src="/static/logo.jpg" border=0 height=100 /></a>
+            </div> <!--end logo-->
+            
+            <div id="nav_container">
+                <div class="nav"><a href="/">home</a></div>
+                    <div class="nav"><a href="/upload/">Upload</a></div>
+                    <div class="nav"><a href="#">Foo</a></div>
+                    <div class="nav"><a href="#">Bar</a></div>
+                    <div class="nav" id='header_login'>
+                        {% if user.is_authenticated %}
+                            Logged in as <b>{{user.email|escape}}</b> &nbsp;|&nbsp;
+                            <a href="/accounts/logout/?next=/" class="admin">Log Out</a>
+                        {% endif %}
+                        {% if not user.is_authenticated %}
+                        <a href='/accounts/login'>Log In</a>
+                        {% endif %}
+                    </div>
+              </div><!--end navContainer-->
+              
+         
+        </div> <!--end header-->
+    
+        <div id="main">
+            {% block main_content %}
+        
+            <div id="left_panel">
+                    {% block content %}
+                    page content
+                    {% endblock %}
+                
+            </div> 
+            
+            <div id="right_panel">
+                {% block right_panel %}
+                    <div id="searchbar">
+                        <input type="text" name="search" 
+                               id="searchInput" value="search"  
+                               onFocus="this.value='';" onchange="javascript:civicdb.search(this.value);" size=35>
+                        <a href="javascript:civicdb.search()"><b>Search</b></a><br>
+                    </div>
+             
+                    <br>
+                    
+                    <div class="sidebar_content">
+                        <div id="latest_datasets">
+                            Latest 5 datasets:<br>
+                            <ul>
+                            {% for p in latest_datasets %}
+                                <a href="/datasets/{{p.id}}/">{{p}}</a><br>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+
+                {% endblock right_panel %}
+            </div> <!--end right_panel-->
+            {% endblock main_content %}
+        </div> <!--end main-->    
+    
+        <div id="footer">
+            <div id="footerContainer">
+                <ul class="footerNav">footer</ul>
+            </div><!--end footerContainer-->
+        </div> <!--end footer-->
+        
+</body>
+</html>

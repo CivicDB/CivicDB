@@ -1,0 +1,21 @@
+{% extends "profiles/base.html" %}     
+
+{% block content %}
+        <div id="profile_spreadsheet">
+            {% ifequal profile.user user %}
+
+            {% endifequal %}
+
+            {{ profile.user }}
+            [...details here ...]
+            <br>
+            <br>
+
+
+    </div>
+    <br><br>
+<div class="link"><a href="/profiles/create/">Edit Profile</a></div>
+<div class="link"><a href="/accounts/password/reset">Reset Password</a></div>
+    
+{% endblock %}
+

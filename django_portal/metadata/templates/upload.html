@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load webdesign %}
+{% block tophead %}
+{% endblock %}
+{% block extrahead %}
+{% endblock %}
+
+
+        {% block content %}
+            <h2>
+            Upload a new DataSet
+            </h2>
+            <form  enctype="multipart/form-data" action="." method="post"> 
+            
+            {{form.as_p}}
+            
+            <div align="right"><a href="/">Cancel</a> <input type="submit" value="post" /></div> 
+            
+        {% endblock %}
+

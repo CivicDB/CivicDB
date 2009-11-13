@@ -1,0 +1,86 @@
+{% extends "registration/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Sign up" %}{% endblock %}
+
+{% block content %}
+
+  {% if form.errors %}
+  <p class="error">{% trans "Please correct the errors below: " %}{{ form.non_field_errors }}</p>
+  {% endif %}
+
+  <h1>{% trans "Create an account" %}</h1>
+  
+  <form method="post" action="" class="wide">
+    REQUIRED:
+    <p>
+      <label for="id_username">{% trans "Username:" %}</label>
+      {% if form.username.errors %}
+        <p class="errors">{{ form.username.errors.as_text }}</p>
+      {% endif %}
+      {{ form.username }}
+    </p>
+    <p>
+      <label for="id_email">{% trans "Email address:" %}</label>
+      {% if form.email.errors %}
+        <p class="errors">{{ form.email.errors.as_text }}</p>
+      {% endif %}
+      {{ form.email }} Note: your email will not be made public and is used only for contacting you via the site.
+    </p>
+    <p>
+      <label for="id_password1">{% trans "Password:" %}</label>
+      {% if form.password1.errors %}
+        <p class="errors">{{ form.password1.errors.as_text }}</p>
+      {% endif %}
+      {{ form.password1 }}
+    </p>
+    <p>
+      <label for="id_password2">{% trans "Password (again):" %}</label>
+      {% if form.password2.errors %}
+        <p class="errors">{{ form.password2.errors.as_text }}</p>
+      {% endif %}
+      {{ form.password2 }}
+    </p>
+    <br>
+    OPTIONAL:
+    <p>
+      <label for="id_first_name">{% trans "First Name:" %}</label>
+      {% if form.first_name.errors %}
+        <p class="errors">{{ form.first_name.errors.as_text }}</p>
+      {% endif %}
+      {{ form.first_name }}
+    </p>
+    <p>
+      <label for="id_last_name">{% trans "Last Name:" %}</label>
+      {% if form.last_name.errors %}
+        <p class="errors">{{ form.last_name.errors.as_text }}</p>
+      {% endif %}
+      {{ form.last_name }}
+    </p>
+    <p>
+      <label for="id_address">{% trans "Address:" %}</label>
+      {% if form.address.errors %}
+        <p class="errors">{{ form.address.errors.as_text }}</p>
+      {% endif %}
+      {{ form.address }}
+    </p>
+    <hr>
+    <!--<p>
+      <label>Have you read and accepted the <a href="/terms/" target="blank">terms of service?</a></label>
+      {% if form.tos.errors %}
+        <p class="errors">{{ form.tos.errors.as_text }}</p>
+      {% endif %}
+      {{ form.tos }} I agree.
+    </p>-->
+    <p class="submit"><input type="submit" value="{% trans "Register" %} &rarr;"></p>
+  </form>
+  
+
+<p>{% trans "Please fill out the form, and your account will be created." %}<br>
+{% trans "You'll then be sent an email with instructions on how to finish your registration." %}</p>
+
+<p>{% trans "If you already have an account, you can" %} <a href="/accounts/login/">{% trans "login here" %}</a>.</p>
+
+{% endblock %}
+
+{% block login %}{% endblock %}
